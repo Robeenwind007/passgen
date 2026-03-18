@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PassGen</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f4f0;
+    --card: #ffffff;
+    --input-bg: #f0efe9;
+    --border: #e2e0d8;
+    --text: #1a1a18;
+    --muted: #9a9890;
+    --accent: #2563eb;
+    --accent-light: #eff4ff;
+    --success: #16a34a;
+    --success-light: #f0fdf4;
+    --danger: #dc2626;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── VIEWS ── */
+  .view {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+
+  .view.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  #welcome.hidden { transform: scale(0.96); }
+  #pin.hidden     { transform: scale(0.96); }
+  #app.hidden     { transform: translateY(18px); }
+
+  /* ══════════════════════════════
+     WELCOME
+  ══════════════════════════════ */
+  #welcome {
+    background: linear-gradient(145deg, #1a1f3a 0%, #0f1525 100%);
+    flex-direction: column;
+  }
+
+  .welcome-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .lock-wrap {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin-bottom: 32px;
+  }
+
+  .lock-bg {
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    background: rgba(37,99,235,0.12);
+    animation: pulse-ring 2.4s ease-in-out infinite;
+  }
+
+  .lock-bg2 {
+    position: absolute; inset: 12px;
+    border-radius: 50%;
+    background: rgba(37,99,235,0.18);
+    animation: pulse-ring 2.4s ease-in-out infinite 0.4s;
+  }
+
+  @keyframes pulse-ring {
+    0%,100% { transform: scale(1);   opacity: 0.7; }
+    50%      { transform: scale(1.1); opacity: 1;   }
+  }
+
+  .lock-icon {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    animation: lock-float 3s ease-in-out infinite;
+  }
+
+  @keyframes lock-float {
+    0%,100% { transform: translateY(0px);  }
+    50%      { transform: translateY(-6px); }
+  }
+
+  .lock-svg { width: 56px; height: 56px; filter: drop-shadow(0 4px 16px rgba(37,99,235,0.5)); }
+
+  .shackle {
+    animation: shackle-close 1.2s cubic-bezier(0.34,1.56,0.64,1) 0.3s both;
+    transform-origin: 50% 100%;
+  }
+
+  @keyframes shackle-close {
+    0%   { transform: translateY(-10px) rotate(-15deg); opacity: 0.4; }
+    100% { transform: translateY(0)     rotate(0deg);   opacity: 1;   }
+  }
+
+  .welcome-title {
+    font-size: 36px; font-weight: 600; color: #fff;
+    letter-spacing: -0.03em; margin-bottom: 10px;
+    animation: fade-up 0.7s ease 0.8s both;
+  }
+
+  .welcome-sub {
+    font-size: 14px; color: rgba(255,255,255,0.4);
+    letter-spacing: 0.04em; margin-bottom: 48px;
+    animation: fade-up 0.7s ease 1s both;
+  }
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .enter-btn {
+    background: var(--accent);
+    color: #fff; border: none; border-radius: 100px;
+    padding: 16px 48px;
+    font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 600;
+    cursor: pointer; letter-spacing: -0.01em;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 24px rgba(37,99,235,0.45);
+    animation: fade-up 0.7s ease 1.2s both;
+  }
+
+  .enter-btn:hover  { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(37,99,235,0.55); }
+  .enter-btn:active { transform: scale(0.97); }
+
+  /* ══════════════════════════════
+     PIN SCREEN
+  ══════════════════════════════ */
+  #pin {
+    background: linear-gradient(145deg, #1a1f3a 0%, #0f1525 100%);
+    flex-direction: column;
+  }
+
+  .pin-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .pin-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+
+  /* Points indicateurs */
+  .pin-dots {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 36px;
+  }
+
+  .pin-dot {
+    width: 28px;
+    font-family: 'DM Mono', monospace;
+    font-size: 24px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.25);
+    text-align: center;
+    line-height: 1;
+    transition: color 0.12s, transform 0.12s;
+  }
+
+  .pin-dot::before { content: '_'; }
+
+  .pin-dot.filled { color: #ffffff; transform: scale(1.2); }
+  .pin-dot.filled::before { content: '*'; }
+
+  .pin-dot.error { color: var(--danger); }
+  .pin-dot.error::before { content: '*'; }
+
+  /* Clavier */
+  .keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    width: 100%;
+  }
+
+  .key {
+    aspect-ratio: 1;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 22px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.12s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .key:hover  { background: rgba(255,255,255,0.13); }
+  .key:active { background: rgba(37,99,235,0.5); transform: scale(0.94); }
+
+  .key.key-del {
+    font-size: 18px;
+    color: rgba(255,255,255,0.5);
+  }
+
+  .key.key-empty {
+    background: transparent;
+    border-color: transparent;
+    cursor: default;
+    pointer-events: none;
+  }
+
+  /* Shake animation */
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    15%      { transform: translateX(-10px); }
+    30%      { transform: translateX(10px); }
+    45%      { transform: translateX(-8px); }
+    60%      { transform: translateX(8px); }
+    75%      { transform: translateX(-4px); }
+    90%      { transform: translateX(4px); }
+  }
+
+  .shake { animation: shake 0.5s ease; }
+
+  /* ══════════════════════════════
+     APP
+  ══════════════════════════════ */
+  #app { background: var(--bg); align-items: center; overflow-y: auto; }
+
+  .card {
+    width: 100%; max-width: 420px;
+    background: var(--card);
+    border-radius: 24px;
+    padding: 36px 32px 32px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 8px 32px rgba(0,0,0,0.08);
+  }
+
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  .brand { font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: -0.01em; }
+
+  .brand-dot {
+    display: inline-block; width: 6px; height: 6px;
+    background: var(--accent); border-radius: 50%;
+    margin-left: 4px; vertical-align: middle; margin-bottom: 2px;
+  }
+
+  .exit-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: none; border: 1.5px solid var(--border); border-radius: 20px;
+    padding: 5px 12px 5px 8px;
+    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
+    color: var(--muted); cursor: pointer; transition: all 0.15s;
+  }
+
+  .exit-btn:hover { border-color: var(--text); color: var(--text); }
+
+  .exit-btn svg {
+    width: 14px; height: 14px;
+    stroke: currentColor; fill: none;
+    stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  .field-label { font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 8px; }
+
+  input[type="text"] {
+    width: 100%;
+    background: var(--input-bg); border: 1.5px solid transparent; border-radius: 12px;
+    padding: 14px 16px;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--text);
+    outline: none; transition: border-color 0.15s, background 0.15s; margin-bottom: 12px;
+  }
+
+  input[type="text"]::placeholder { color: var(--muted); }
+  input[type="text"]:focus { border-color: var(--accent); background: #fff; }
+
+  button.gen-btn {
+    width: 100%; background: var(--accent); color: #fff; border: none; border-radius: 12px;
+    padding: 14px;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: opacity 0.15s, transform 0.1s; margin-bottom: 20px;
+  }
+
+  button.gen-btn:hover  { opacity: 0.88; }
+  button.gen-btn:active { transform: scale(0.99); }
+
+  .divider { height: 1px; background: var(--border); margin-bottom: 20px; }
+
+  .result-area {
+    min-height: 72px; border-radius: 12px; padding: 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    background: var(--input-bg); transition: background 0.25s;
+  }
+
+  .result-area.has-result { background: var(--accent-light); }
+
+  .result-placeholder { font-size: 14px; color: var(--muted); font-style: italic; }
+
+  .result-password {
+    font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 500;
+    color: var(--accent); letter-spacing: 0.02em; word-break: break-all; flex: 1; line-height: 1.3;
+  }
+
+  .copy-btn {
+    flex-shrink: 0; background: var(--card);
+    border: 1.5px solid var(--border); border-radius: 8px; padding: 7px 13px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+    color: var(--text); cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; gap: 5px;
+  }
+
+  .copy-btn:hover  { border-color: var(--accent); color: var(--accent); }
+  .copy-btn.copied { background: var(--success-light); border-color: var(--success); color: var(--success); }
+
+  .copy-icon {
+    width: 14px; height: 14px; stroke: currentColor; fill: none;
+    stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0;
+  }
+
+  .eye-btn {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    padding: 6px;
+    cursor: pointer;
+    color: var(--muted);
+    transition: color 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .eye-btn:hover { color: var(--accent); }
+
+  .eye-btn svg {
+    width: 18px; height: 18px;
+    stroke: currentColor; fill: none;
+    stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  .length-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+
+  .length-chip {
+    border: 1.5px solid var(--accent); border-radius: 8px; padding: 8px 14px;
+    font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500;
+    color: var(--accent); background: var(--accent-light); min-width: 48px; text-align: center;
+  }
+
+  .length-sep { font-size: 12px; color: var(--muted); flex-shrink: 0; }
+
+  input.length-target {
+    width: 68px; background: var(--input-bg); border: 1.5px solid var(--border); border-radius: 8px;
+    padding: 8px 10px; font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500;
+    color: var(--text); outline: none; text-align: center; transition: border-color 0.15s; margin-bottom: 0;
+  }
+
+  input.length-target:focus { border-color: var(--accent); background: #fff; }
+
+  .padding-badge {
+    font-size: 12px; font-weight: 600; color: var(--success);
+    background: var(--success-light); border-radius: 6px; padding: 4px 9px;
+    font-family: 'DM Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── WELCOME ── -->
+<div class="view" id="welcome">
+  <div class="welcome-inner">
+    <div class="lock-wrap">
+      <div class="lock-bg"></div>
+      <div class="lock-bg2"></div>
+      <div class="lock-icon">
+        <svg class="lock-svg" viewBox="0 0 56 56" fill="none">
+          <rect x="10" y="26" width="36" height="24" rx="6" fill="#2563eb" opacity="0.95"/>
+          <path class="shackle" d="M18 26 V18 C18 11.4 38 11.4 38 18 V26" stroke="white" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+          <circle cx="28" cy="36" r="4" fill="white" opacity="0.9"/>
+          <rect x="26.5" y="38" width="3" height="5" rx="1.5" fill="white" opacity="0.9"/>
+        </svg>
+      </div>
+    </div>
+    <h1 class="welcome-title">PassGen</h1>
+    <p class="welcome-sub">Vos mots de passe, votre algorithme</p>
+    <button class="enter-btn" onclick="showPin()">Entrer</button>
+  </div>
+</div>
+
+<!-- ── PIN ── -->
+<div class="view hidden" id="pin">
+  <div class="pin-inner">
+    <p class="pin-title">Code d'accès</p>
+
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot" id="d0"></div>
+      <div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div>
+      <div class="pin-dot" id="d3"></div>
+      <div class="pin-dot" id="d4"></div>
+      <div class="pin-dot" id="d5"></div>
+    </div>
+
+    <div class="keypad" id="keypad"></div>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div class="view hidden" id="app">
+  <div class="card">
+    <div class="card-header">
+      <div class="brand">PassGen<span class="brand-dot"></span></div>
+      <button class="exit-btn" onclick="exitApp()">
+        <svg viewBox="0 0 24 24">
+          <path d="M13 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7"/>
+          <path d="M17 16l4-4-4-4"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        Quitter
+      </button>
+    </div>
+
+    <div class="field-label">Nom du site ou de l'application</div>
+    <input type="text" id="siteName"
+      placeholder="Booking, Netflix, Herculepro…"
+      autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+
+    <button class="gen-btn" onclick="generate()">Générer le mot de passe</button>
+
+    <div class="divider"></div>
+
+    <div class="result-area" id="resultBox">
+      <span class="result-placeholder" id="resultPlaceholder">En attente…</span>
+      <span class="result-password" id="resultPassword" style="display:none"></span>
+      <div id="resultActions" style="display:none; align-items:center; gap:6px; flex-shrink:0;">
+        <button class="eye-btn" id="eyeBtn" onclick="toggleVisibility()" title="Afficher / masquer">
+          <svg id="eyeIcon" viewBox="0 0 24 24">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+            <line id="eyeSlash" x1="3" y1="3" x2="21" y2="21"/>
+          </svg>
+        </button>
+        <button class="copy-btn" id="copyBtn" onclick="copyPassword()">
+          <svg class="copy-icon" viewBox="0 0 24 24">
+            <rect x="9" y="9" width="13" height="13" rx="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          <span id="copyLabel">Copier</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="length-row" id="lengthRow" style="display:none">
+      <div class="length-chip" id="lengthChip">—</div>
+      <span class="length-sep">car. &nbsp;/&nbsp; min.</span>
+      <input type="number" class="length-target" id="lengthTarget" placeholder="—" min="1" oninput="applyPadding()">
+      <span class="padding-badge" id="paddingBadge" style="display:none"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+const SECRET = '101212';
+let pinEntry = '';
+let keypadOrder = [];
+
+// ── NAVIGATION ──
+function showPin() {
+  document.getElementById('welcome').classList.add('hidden');
+  pinEntry = '';
+  updateDots();
+  buildKeypad();
+  document.getElementById('pin').classList.remove('hidden');
+}
+
+function showApp() {
+  document.getElementById('pin').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  setTimeout(() => document.getElementById('siteName').focus(), 450);
+}
+
+function exitApp() {
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('welcome').classList.remove('hidden');
+  // Reset app state
+  document.getElementById('siteName').value = '';
+  document.getElementById('resultPlaceholder').style.display = '';
+  document.getElementById('resultPassword').style.display = 'none';
+  document.getElementById('resultActions').style.display = 'none';
+  document.getElementById('resultBox').classList.remove('has-result');
+  document.getElementById('lengthRow').style.display = 'none';
+  document.getElementById('paddingBadge').style.display = 'none';
+  basePassword = '';
+}
+
+// ── KEYPAD ──
+function buildKeypad() {
+  // Mélange les chiffres 0-9
+  const digits = [0,1,2,3,4,5,6,7,8,9];
+  for (let i = digits.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [digits[i], digits[j]] = [digits[j], digits[i]];
+  }
+  keypadOrder = digits;
+
+  // Grille 4 rangées : 3 + 3 + 3 + [vide, 0, del]
+  // On place les 9 premiers chiffres sur 3 rangées, puis rangée finale
+  const grid = [...digits.slice(0,9)]; // 9 chiffres mélangés
+  const last = digits[9]; // 10e chiffre va en position centrale
+
+  const keypad = document.getElementById('keypad');
+  keypad.innerHTML = '';
+
+  // Rangées 1-3 : 9 touches
+  grid.forEach(d => {
+    const btn = document.createElement('button');
+    btn.className = 'key';
+    btn.textContent = d;
+    btn.addEventListener('click', () => pressKey(String(d)));
+    keypad.appendChild(btn);
+  });
+
+  // Rangée 4 : vide | dernier chiffre | ⌫
+  const empty = document.createElement('button');
+  empty.className = 'key key-empty';
+  keypad.appendChild(empty);
+
+  const lastBtn = document.createElement('button');
+  lastBtn.className = 'key';
+  lastBtn.textContent = last;
+  lastBtn.addEventListener('click', () => pressKey(String(last)));
+  keypad.appendChild(lastBtn);
+
+  const del = document.createElement('button');
+  del.className = 'key key-del';
+  del.innerHTML = '⌫';
+  del.addEventListener('click', pressDelete);
+  keypad.appendChild(del);
+}
+
+function pressKey(digit) {
+  if (pinEntry.length >= SECRET.length) return;
+  pinEntry += digit;
+  updateDots();
+
+  if (pinEntry.length === SECRET.length) {
+    setTimeout(checkPin, 180);
+  }
+}
+
+function pressDelete() {
+  if (pinEntry.length === 0) return;
+  pinEntry = pinEntry.slice(0, -1);
+  updateDots();
+}
+
+function updateDots() {
+  for (let i = 0; i < SECRET.length; i++) {
+    const dot = document.getElementById('d' + i);
+    dot.classList.toggle('filled', i < pinEntry.length);
+    dot.classList.remove('error');
+  }
+}
+
+function checkPin() {
+  if (pinEntry === SECRET) {
+    // Succès : tous les points restent blancs (filled) puis on entre
+    setTimeout(showApp, 400);
+  } else {
+    // Erreur : rouge + shake + reset
+    for (let i = 0; i < SECRET.length; i++) {
+      document.getElementById('d' + i).classList.add('error');
+    }
+    const dotsEl = document.getElementById('pinDots');
+    dotsEl.classList.add('shake');
+    dotsEl.addEventListener('animationend', () => {
+      dotsEl.classList.remove('shake');
+      pinEntry = '';
+      updateDots();
+      buildKeypad(); // Nouveau mélange à chaque erreur
+    }, { once: true });
+  }
+}
+
+// ── APP LOGIC ──
+let basePassword = '';
+let currentPassword = '';
+let isVisible = false;
+
+function generate() {
+  const raw = document.getElementById('siteName').value.trim();
+  if (!raw) return;
+  const name = raw.toUpperCase().replace(/[^A-Z]/g, '');
+  if (!name) return;
+
+  basePassword = buildPassword(name);
+  document.getElementById('lengthTarget').value = '';
+  document.getElementById('paddingBadge').style.display = 'none';
+  showResult(basePassword);
+  document.getElementById('lengthChip').textContent = basePassword.length;
+  document.getElementById('lengthRow').style.display = 'flex';
+}
+
+function buildPassword(name) {
+  let pw = '@';
+  let majorAssigned = false;
+  pw += name[0].charCodeAt(0) - 64;
+  for (let i = 1; i < name.length; i++) {
+    const ch = name[i];
+    if (ch === 'O') {
+      pw += '0';
+    } else if (!majorAssigned) {
+      pw += ch;
+      majorAssigned = true;
+    } else {
+      pw += ch.toLowerCase();
+    }
+  }
+  return pw + '@$';
+}
+
+function applyPadding() {
+  if (!basePassword) return;
+  const target = parseInt(document.getElementById('lengthTarget').value);
+  const badge = document.getElementById('paddingBadge');
+  if (!target || isNaN(target) || target <= basePassword.length) {
+    showResult(basePassword);
+    badge.style.display = 'none';
+    return;
+  }
+  const diff = target - basePassword.length;
+  showResult(basePassword + '@'.repeat(diff));
+  badge.textContent = '+' + diff + ' @';
+  badge.style.display = 'inline';
+}
+
+function showResult(password) {
+  currentPassword = password;
+  document.getElementById('resultPlaceholder').style.display = 'none';
+  const pw = document.getElementById('resultPassword');
+  pw.style.display = 'block';
+  // Always show masked on new generation
+  isVisible = false;
+  pw.textContent = '*'.repeat(password.length);
+  updateEyeIcon();
+  document.getElementById('resultActions').style.display = 'flex';
+  document.getElementById('copyBtn').classList.remove('copied');
+  document.getElementById('copyLabel').textContent = 'Copier';
+  document.getElementById('resultBox').classList.add('has-result');
+}
+
+function copyPassword() {
+  navigator.clipboard.writeText(currentPassword).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.classList.add('copied');
+    document.getElementById('copyLabel').textContent = 'Copié !';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      document.getElementById('copyLabel').textContent = 'Copier';
+    }, 2000);
+  });
+}
+
+
+function toggleVisibility() {
+  isVisible = !isVisible;
+  const pw = document.getElementById('resultPassword');
+  pw.textContent = isVisible ? currentPassword : '*'.repeat(currentPassword.length);
+  updateEyeIcon();
+}
+
+function updateEyeIcon() {
+  const slash = document.getElementById('eyeSlash');
+  slash.style.display = isVisible ? 'none' : 'inline';
+}
+
+document.getElementById('siteName').addEventListener('keydown', e => {
+  if (e.key === 'Enter') generate();
+});
+</script>
+</body>
+</html>
