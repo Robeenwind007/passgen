@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PassGen</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --border: #2a2a3a;
+    --accent: #7c6af7;
+    --accent2: #f76a8a;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --green: #4af7a0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 600px 400px at 20% 50%, rgba(124,106,247,0.08) 0%, transparent 70%),
+      radial-gradient(ellipse 400px 300px at 80% 20%, rgba(247,106,138,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 480px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 36px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+
+  .logo {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 32px;
+  }
+
+  .logo span {
+    color: var(--accent);
+  }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 8px;
+  }
+
+  h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 36px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .field-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input[type="text"]::placeholder {
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  input[type="text"]:focus {
+    border-color: var(--accent);
+  }
+
+  button.gen-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 14px 20px;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    white-space: nowrap;
+  }
+
+  button.gen-btn:hover { background: #6a58e0; }
+  button.gen-btn:active { transform: scale(0.97); }
+
+  .result-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 64px;
+    transition: border-color 0.3s;
+  }
+
+  .result-box.has-result {
+    border-color: var(--accent);
+  }
+
+  .result-password {
+    font-family: 'Space Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--green);
+    letter-spacing: 0.04em;
+    word-break: break-all;
+    flex: 1;
+  }
+
+  .result-placeholder {
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  button.copy-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  button.copy-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  button.copy-btn.copied {
+    border-color: var(--green);
+    color: var(--green);
+  }
+
+  .steps {
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  .steps-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .step-item {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    padding: 4px 0;
+  }
+
+  .step-item span.step-label {
+    color: var(--accent2);
+    min-width: 80px;
+    font-size: 11px;
+  }
+
+  .step-item span.step-val {
+    color: var(--text);
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">Pass<span>Gen</span> · v0.1</div>
+  <h1>Ton mot de passe,<br><em>ton algo.</em></h1>
+  <p class="subtitle">// algorithme personnel · déterministe</p>
+
+  <div class="field-label">Nom du site ou de l'app</div>
+  <div class="input-row">
+    <input type="text" id="siteName" placeholder="ex: Booking, Herculepro…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <button class="gen-btn" onclick="generate()">Générer</button>
+  </div>
+
+  <div class="field-label">Mot de passe généré</div>
+  <div class="result-box" id="resultBox">
+    <span class="result-placeholder" id="resultPlaceholder">Le résultat apparaîtra ici</span>
+    <span class="result-password" id="resultPassword" style="display:none"></span>
+    <button class="copy-btn" id="copyBtn" style="display:none" onclick="copyPassword()">copier</button>
+  </div>
+
+  <div class="steps" id="stepsBox" style="display:none">
+    <div class="steps-title">Détail de construction</div>
+    <div id="stepsContent"></div>
+  </div>
+</div>
+
+<script>
+function generate() {
+  const raw = document.getElementById('siteName').value.trim();
+  if (!raw) return;
+
+  const name = raw.toUpperCase().replace(/[^A-Z]/g, '');
+  if (!name) return;
+
+  const result = buildPassword(name);
+  showResult(result.password, result.steps);
+}
+
+function buildPassword(name) {
+  const steps = [];
+  let password = '@';
+  let i = 0;
+  let majorAssigned = false;
+
+  // Première lettre → valeur numérique
+  const firstChar = name[0];
+  const numVal = firstChar.charCodeAt(0) - 64; // A=1, B=2...
+  password += numVal;
+  steps.push({ label: `"${firstChar}" → num`, val: numVal });
+  i = 1;
+
+  // Parcours du reste
+  while (i < name.length) {
+    const ch = name[i];
+
+    if (ch === 'O') {
+      password += '0';
+      steps.push({ label: `"O" → zéro`, val: '0' });
+      // La majuscule se décale si elle n'a pas encore été assignée
+    } else if (!majorAssigned) {
+      // Cette lettre prend la majuscule
+      password += ch; // déjà en maj puisque name est en uppercase
+      steps.push({ label: `"${ch}" → MAJ`, val: ch });
+      majorAssigned = true;
+    } else {
+      // Minuscule
+      const low = ch.toLowerCase();
+      password += low;
+      steps.push({ label: `"${ch}" → min`, val: low });
+    }
+    i++;
+  }
+
+  password += '@$';
+  steps.push({ label: 'suffixe', val: '@$' });
+
+  return { password, steps };
+}
+
+function showResult(password, steps) {
+  document.getElementById('resultPlaceholder').style.display = 'none';
+  const pw = document.getElementById('resultPassword');
+  pw.style.display = 'block';
+  pw.textContent = password;
+
+  const copyBtn = document.getElementById('copyBtn');
+  copyBtn.style.display = 'block';
+  copyBtn.textContent = 'copier';
+  copyBtn.classList.remove('copied');
+
+  document.getElementById('resultBox').classList.add('has-result');
+
+  // Steps detail
+  const stepsBox = document.getElementById('stepsBox');
+  const stepsContent = document.getElementById('stepsContent');
+  stepsContent.innerHTML = steps.map(s =>
+    `<div class="step-item">
+      <span class="step-label">${s.label}</span>
+      <span class="step-val">${s.val}</span>
+    </div>`
+  ).join('');
+  stepsBox.style.display = 'block';
+}
+
+function copyPassword() {
+  const pw = document.getElementById('resultPassword').textContent;
+  navigator.clipboard.writeText(pw).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✓ copié';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'copier';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+// Entrée clavier
+document.getElementById('siteName').addEventListener('keydown', e => {
+  if (e.key === 'Enter') generate();
+});
+</script>
+</body>
+</html>
